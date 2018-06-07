@@ -3,22 +3,22 @@ $(function () {
     // Prepare random data
     var data = [{
         "code": "12Y",
-            "value": 728
+        "value": 728
     }, {
         "code": "10Y",
-            "value": 541
+        "value": 541
     }];
 
     var geojson = {
         "type": "FeatureCollection",
-            "crs": {
+        "crs": {
             "type": "name",
             "properties": {
                 "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
             }
         },
 
-            "features": [{
+        "features": [{
             "type": "Feature",
             "properties": {
                 "CP_BEAT": "12Y",
@@ -111,7 +111,7 @@ $(function () {
             text: 'Negative coordinats failed'
         },
 
-        
+
         series: [{
             data: data,
             mapData: geojson,
@@ -119,7 +119,7 @@ $(function () {
             name: 'Random data',
             states: {
                 hover: {
-                    color: '#BADA55'
+                    color: '#a4edba'
                 }
             },
             dataLabels: {

@@ -1,7 +1,7 @@
-function test(chart) {
-	chart.series[0].hide();
+function test(chart) { // eslint-disable-line no-unused-vars
+    chart.series[0].hide();
 
-	chart.getSVG = function () {
-		return chart.container.innerHTML;
-	}
+    chart.getSVG = function () {
+        return chart.container.innerHTML;
+    };
 }

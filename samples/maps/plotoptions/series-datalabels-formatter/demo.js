@@ -1,65 +1,64 @@
-$(function () {
 
-    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=us-population-density.json&callback=?', function (data) {
 
-        // Make it joinable
-        $.each(data, function () {
-            this.hasc = 'US.' + this.code.toUpperCase();
-        });
+$.getJSON('https://cdn.rawgit.com/highcharts/highcharts/v6.0.4/samples/data/us-population-density.json', function (data) {
 
-        // Instanciate the map
-        $('#container').highcharts('Map', {
-            chart : {
-                borderWidth : 1
-            },
+    // Make it joinable
+    $.each(data, function () {
+        this.hasc = 'US.' + this.code.toUpperCase();
+    });
 
-            title : {
-                text : 'Data label formatter to show value conditionally'
-            },
+    // Instanciate the map
+    Highcharts.mapChart('container', {
+        chart: {
+            borderWidth: 1
+        },
 
-            legend: {
-                title: {
-                    text: 'US population density per km²'
-                }
-            },
+        title: {
+            text: 'Data label formatter to show value conditionally'
+        },
 
-            mapNavigation: {
-                enabled: true
-            },
+        legend: {
+            title: {
+                text: 'US population density per km²'
+            }
+        },
 
-            colorAxis: {
-                min: 1,
-                type: 'logarithmic',
-                minColor: '#EEEEFF',
-                maxColor: '#000022',
-                stops: [
-                    [0, '#EFEFFF'],
-                    [0.67, '#4444FF'],
-                    [1, '#000022']
-                ]
-            },
+        mapNavigation: {
+            enabled: true
+        },
 
-            series : [{
-                data : data,
-                mapData: Highcharts.maps['countries/us/us-all'],
-                joinBy: 'hasc',
-                dataLabels: {
-                    enabled: true,
-                    color: 'white',
-                    formatter: function () {
-                        if (this.point.graphic.getBBox().width > 30) {
-                            return Highcharts.numberFormat(this.point.value, 1);
-                        }
-                    },
-                    style: {
-                        textTransform: 'uppercase'
+        colorAxis: {
+            min: 1,
+            type: 'logarithmic',
+            minColor: '#EEEEFF',
+            maxColor: '#000022',
+            stops: [
+                [0, '#EFEFFF'],
+                [0.67, '#4444FF'],
+                [1, '#000022']
+            ]
+        },
+
+        series: [{
+            data: data,
+            mapData: Highcharts.maps['countries/us/us-all'],
+            joinBy: 'hasc',
+            dataLabels: {
+                enabled: true,
+                color: '#FFFFFF',
+                formatter: function () {
+                    if (this.point.graphic.getBBox().width > 30) {
+                        return Highcharts.numberFormat(this.point.value, 1);
                     }
                 },
-                name: 'Population density',
-                tooltip: {
-                    pointFormat: '{point.code}: {point.value}/km²'
+                style: {
+                    textTransform: 'uppercase'
                 }
-            }]
-        });
+            },
+            name: 'Population density',
+            tooltip: {
+                pointFormat: '{point.code}: {point.value}/km²'
+            }
+        }]
     });
 });

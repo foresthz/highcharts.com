@@ -1,25 +1,24 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        xAxis: {
-            title: {
-                text: 'This is a Date/time axis'
-            }
-        },
+Highcharts.stockChart('container', {
 
-        yAxis: {
-            title: {
-                text: 'USD to EUR'
-            }
-        },
+    xAxis: {
+        title: {
+            text: 'This is a Date/time axis'
+        }
+    },
 
-        rangeSelector: {
-            selected: 1
-        },
+    yAxis: {
+        title: {
+            text: 'USD to EUR'
+        }
+    },
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        selected: 1
+    },
+
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur
+    }]
 });

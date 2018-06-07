@@ -1,6 +1,6 @@
 $(function () {
 
-    var chart = $('#container').highcharts({
+    $('#container').highcharts({
 
         chart: {
             plotBackgroundColor: '#E0FFFF',
@@ -20,15 +20,16 @@ $(function () {
             enabled: true
         },
 
-
+        tooltip: {
+            followTouchMove: false
+        },
+        
         series: [{
             name: 'blue',
             color: '#0000FF',
-            data: [1,4,3,4,5,5,4],
+            data: [1, 4, 3, 4, 5, 5, 4],
             pointStart: 3
         }]
-    }, function (chart) {
-        chart.xAxis[0].setExtremes(2, 6, true, false);
     });
 
 });

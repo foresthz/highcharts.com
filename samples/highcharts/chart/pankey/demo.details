@@ -1,6 +1,7 @@
 ---
  name: Highcharts Demo
+ skipTest: true
  authors:
    - Torstein Hønsi
- requiresManualTesting: true
+ js_wrap: b
 ...

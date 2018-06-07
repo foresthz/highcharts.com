@@ -1,57 +1,57 @@
-$(function () {
 
-    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=world-population-density.json&callback=?', function (data) {
+var chart;
+$.getJSON('https://cdn.rawgit.com/highcharts/highcharts/v6.0.4/samples/data/world-population-density.json', function (data) {
 
-        // Initiate the chart
-        $('#container').highcharts('Map', {
+    // Initiate the chart
+    chart = Highcharts.mapChart('container', {
 
-            title : {
-                text : 'Update the color axis'
-            },
+        title: {
+            text: 'Update the color axis'
+        },
 
-            colorAxis: {
-                min: 1,
-                max: 1000,
-                type: 'logarithmic',
-                minColor: '#FFFFFF',
-                maxColor: '#000000'
-            },
+        colorAxis: {
+            min: 1,
+            max: 1000,
+            type: 'logarithmic',
+            minColor: '#FFFFFF',
+            maxColor: '#000000',
+            tickPixelInterval: 100
+        },
 
-            series : [{
-                data : data,
-                mapData: Highcharts.maps['custom/world'],
-                joinBy: ['iso-a2', 'code'],
-                name: 'Population density',
-                states: {
-                    hover: {
-                        color: '#BADA55'
-                    }
-                },
-                tooltip: {
-                    valueSuffix: '/km²'
+        series: [{
+            data: data,
+            mapData: Highcharts.maps['custom/world'],
+            joinBy: ['iso-a2', 'code'],
+            name: 'Population density',
+            states: {
+                hover: {
+                    color: '#a4edba'
                 }
-            }]
-        });
+            },
+            tooltip: {
+                valueSuffix: '/km²'
+            }
+        }]
     });
+});
 
-    var blackAndWhite = true,
-        log = true;
+var blackAndWhite = true,
+    log = true;
 
-    $('#update-color').click(function () {
-        var colorAxis = $('#container').highcharts().colorAxis[0];
+$('#update-color').click(function () {
+    var colorAxis = chart.colorAxis[0];
 
-        colorAxis.update({
-            maxColor: blackAndWhite ? '#980043' : '#000000'
-        });
-        blackAndWhite = !blackAndWhite;
+    colorAxis.update({
+        maxColor: blackAndWhite ? '#980043' : '#000000'
     });
+    blackAndWhite = !blackAndWhite;
+});
 
-    $('#update-linlog').click(function () {
-        var colorAxis = $('#container').highcharts().colorAxis[0];
+$('#update-linlog').click(function () {
+    var colorAxis = chart.colorAxis[0];
 
-        colorAxis.update({
-            type: log ? 'linear' : 'logarithmic'
-        });
-        log = !log;
+    colorAxis.update({
+        type: log ? 'linear' : 'logarithmic'
     });
+    log = !log;
 });

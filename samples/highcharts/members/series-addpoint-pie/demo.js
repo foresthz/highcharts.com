@@ -1,20 +1,18 @@
-$(function () {
-    $('#container').highcharts({
 
-        chart: {
-            type: 'pie'
-        },
+var chart = Highcharts.chart('container', {
 
-        series: [{
-            data: [29.9, 71.5, 106.4]
-        }]
-    });
+    chart: {
+        type: 'pie'
+    },
 
-    // the button action
-    var i = 0;
-    $('#button').click(function () {
-        var chart = $('#container').highcharts();
-        chart.series[0].addPoint((50 * (i % 3)) + 10);
-        i += 1;
-    });
+    series: [{
+        data: [29.9, 71.5, 106.4]
+    }]
+});
+
+// the button action
+var i = 0;
+$('#button').click(function () {
+    chart.series[0].addPoint((50 * (i % 3)) + 10);
+    i += 1;
 });

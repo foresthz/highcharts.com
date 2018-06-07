@@ -1,17 +1,16 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        xAxis: {
-            range: 6 * 30 * 24 * 3600 * 1000 // six months
-        },
+Highcharts.stockChart('container', {
 
-        rangeSelector: {
-            enabled: false
-        },
+    xAxis: {
+        range: 6 * 30 * 24 * 3600 * 1000 // six months
+    },
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        enabled: false
+    },
+
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur
+    }]
 });

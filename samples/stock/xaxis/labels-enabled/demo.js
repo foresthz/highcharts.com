@@ -1,21 +1,20 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
-        title: {
-            text: 'xAxis.labels.enabled = false'
-        },
-        xAxis: {
-            labels: {
-                enabled: false
-            }
-        },
 
-        rangeSelector: {
-            selected: 1
-        },
+Highcharts.stockChart('container', {
+    title: {
+        text: 'xAxis.labels.enabled = false'
+    },
+    xAxis: {
+        labels: {
+            enabled: false
+        }
+    },
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        selected: 1
+    },
+
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur
+    }]
 });

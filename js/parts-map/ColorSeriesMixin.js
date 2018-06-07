@@ -1,89 +1,107 @@
 /**
+ * (c) 2010-2017 Torstein Honsi
+ *
+ * License: www.highcharts.com/license
+ */
+'use strict';
+import H from '../parts/Globals.js';
+import '../parts/Utilities.js';
+var defined = H.defined,
+    each = H.each,
+    noop = H.noop,
+    seriesTypes = H.seriesTypes;
+
+/**
  * Mixin for maps and heatmaps
  */
-var colorSeriesMixin = {
+H.colorPointMixin = {
+    /**
+     * Color points have a value option that determines whether or not it is
+     * a null point
+     */
+    isValid: function () {
+        // undefined is allowed
+        return (
+            this.value !== null &&
+            this.value !== Infinity &&
+            this.value !== -Infinity
+        );
+    },
 
-	pointAttrToOptions: { // mapping between SVG attributes and the corresponding options
-		stroke: 'borderColor',
-		'stroke-width': 'borderWidth',
-		fill: 'color',
-		dashstyle: 'dashStyle'
-	},
-	pointArrayMap: ['value'],
-	axisTypes: ['xAxis', 'yAxis', 'colorAxis'],
-	optionalAxis: 'colorAxis',
-	trackerGroups: ['group', 'markerGroup', 'dataLabelsGroup'],
-	getSymbol: noop,
-	parallelArrays: ['x', 'y', 'value'],
-	colorKey: 'value',
-	
-	/**
-	 * In choropleth maps, the color is a result of the value, so this needs translation too
-	 */
-	translateColors: function () {
-		var series = this,
-			nullColor = this.options.nullColor,
-			colorAxis = this.colorAxis,
-			colorKey = this.colorKey;
+    /**
+     * Set the visibility of a single point
+     */
+    setVisible: function (vis) {
+        var point = this,
+            method = vis ? 'show' : 'hide';
 
-		each(this.data, function (point) {
-			var value = point[colorKey],
-				color;
-
-			color = value === null ? nullColor : (colorAxis && value !== undefined) ? colorAxis.toColor(value, point) : point.color || series.color;
-
-			if (color) {
-				point.color = color;
-			}
-		});
-	}
+        // Show and hide associated elements
+        each(['graphic', 'dataLabel'], function (key) {
+            if (point[key]) {
+                point[key][method]();
+            }
+        });
+    },
+    setState: function (state) {
+        H.Point.prototype.setState.call(this, state);
+        if (this.graphic) {
+            this.graphic.attr({
+                zIndex: state === 'hover' ? 1 : 0
+            });
+        }
+    }
 };
 
+H.colorSeriesMixin = {
+    pointArrayMap: ['value'],
+    axisTypes: ['xAxis', 'yAxis', 'colorAxis'],
+    optionalAxis: 'colorAxis',
+    trackerGroups: ['group', 'markerGroup', 'dataLabelsGroup'],
+    getSymbol: noop,
+    parallelArrays: ['x', 'y', 'value'],
+    colorKey: 'value',
 
-/**
- * Wrap the buildText method and add the hook for add text stroke
- */
-wrap(SVGRenderer.prototype, 'buildText', function (proceed, wrapper) {
+    /*= if (build.classic) { =*/
+    pointAttribs: seriesTypes.column.prototype.pointAttribs,
+    /*= } =*/
 
-	var textStroke = wrapper.styles && wrapper.styles.HcTextStroke;
+    /**
+     * In choropleth maps, the color is a result of the value, so this needs
+     * translation too
+     */
+    translateColors: function () {
+        var series = this,
+            nullColor = this.options.nullColor,
+            colorAxis = this.colorAxis,
+            colorKey = this.colorKey;
 
-	proceed.call(this, wrapper);
+        each(this.data, function (point) {
+            var value = point[colorKey],
+                color;
 
-	// Apply the text stroke
-	if (textStroke && wrapper.applyTextStroke) {
-		wrapper.applyTextStroke(textStroke);
-	}
-});
+            color = point.options.color ||
+                (
+                    point.isNull ?
+                        nullColor :
+                        (colorAxis && value !== undefined) ?
+                            colorAxis.toColor(value, point) :
+                            point.color || series.color
+                );
 
-/**
- * Apply an outside text stroke to data labels, based on the custom CSS property, HcTextStroke.
- * Consider moving this to Highcharts core, also makes sense on stacked columns etc.
- */
-SVGRenderer.prototype.Element.prototype.applyTextStroke = function (textStroke) {
-	var elem = this.element,
-		tspans,
-		firstChild;
-	
-	textStroke = textStroke.split(' ');
-	tspans = elem.getElementsByTagName('tspan');
-	firstChild = elem.firstChild;
-	
-	// In order to get the right y position of the clones, 
-	// copy over the y setter
-	this.ySetter = this.xSetter;
-	
-	each([].slice.call(tspans), function (tspan, y) {
-		var clone;
-		if (y === 0) {
-			tspan.setAttribute('x', elem.getAttribute('x'));
-			if ((y = elem.getAttribute('y')) !== null) {
-				tspan.setAttribute('y', y);
-			}
-		}
-		clone = tspan.cloneNode(1);
-		clone.setAttribute('stroke', textStroke[1]);
-		clone.setAttribute('stroke-width', textStroke[0]);
-		clone.setAttribute('stroke-linejoin', 'round');
-		elem.insertBefore(clone, firstChild);
-	});
+            if (color) {
+                point.color = color;
+            }
+        });
+    },
+
+    /**
+     * Get the color attibutes to apply on the graphic
+     */
+    colorAttribs: function (point) {
+        var ret = {};
+        if (defined(point.color)) {
+            ret[this.colorProp || 'fill'] = point.color;
+        }
+        return ret;
+    }
 };

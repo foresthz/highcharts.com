@@ -1,54 +1,56 @@
-$(function () {
-    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=usdeur.json&callback=?', function (data) {
 
-        // Create the chart
-        $('#container').highcharts('StockChart', {
+$.getJSON('https://cdn.rawgit.com/highcharts/highcharts/057b672172ccc6c08fe7dbb27fc17ebca3f5b770/samples/data/usdeur.json', function (data) {
 
-            rangeSelector: {
-                selected: 1
-            },
+    var lastDate = data[data.length - 1][0],  // Get year of last data point
+        days = 24 * 36e5; // Milliseconds in a day
 
+    // Create the chart
+    Highcharts.stockChart('container', {
+
+        rangeSelector: {
+            selected: 1
+        },
+
+        title: {
+            text: 'USD to EUR exchange rate'
+        },
+
+        yAxis: {
             title: {
-                text: 'USD to EUR exchange rate'
-            },
+                text: 'Exchange rate'
+            }
+        },
 
-            yAxis: {
-                title: {
-                    text: 'Exchange rate'
-                }
-            },
-
-            series: [{
-                name: 'USD to EUR',
-                data: data,
-                id: 'dataseries',
-                tooltip: {
-                    valueDecimals: 4
-                }
+        series: [{
+            name: 'USD to EUR',
+            data: data,
+            id: 'dataseries',
+            tooltip: {
+                valueDecimals: 4
+            }
+        }, {
+            type: 'flags',
+            name: 'Flags on series',
+            data: [{
+                x: lastDate - 60 * days,
+                title: 'On series'
             }, {
-                type: 'flags',
-                name: 'Flags on series',
-                data: [{
-                    x: Date.UTC(2011, 1, 22),
-                    title: 'On series'
-                }, {
-                    x: Date.UTC(2011, 3, 28),
-                    title: 'On series'
-                }],
-                onSeries: 'dataseries',
-                shape: 'squarepin'
+                x: lastDate - 30 * days,
+                title: 'On series'
+            }],
+            onSeries: 'dataseries',
+            shape: 'squarepin'
+        }, {
+            type: 'flags',
+            name: 'Flags on axis',
+            data: [{
+                x: lastDate - 45 * days,
+                title: 'On axis'
             }, {
-                type: 'flags',
-                name: 'Flags on axis',
-                data: [{
-                    x: Date.UTC(2011, 2, 1),
-                    title: 'On axis'
-                }, {
-                    x: Date.UTC(2011, 3, 1),
-                    title: 'On axis'
-                }],
-                shape: 'squarepin'
-            }]
-        });
+                x: lastDate - 15 * days,
+                title: 'On axis'
+            }],
+            shape: 'squarepin'
+        }]
     });
 });

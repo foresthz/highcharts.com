@@ -1,17 +1,17 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        chart: {
-            plotBackgroundImage: 'http://www.highcharts.com/demo/gfx/skies.jpg'
-        },
+Highcharts.stockChart('container', {
 
-        rangeSelector: {
-            selected: 1
-        },
+    chart: {
+        plotBackgroundImage: 'https://www.highcharts.com/samples/graphics/skies.jpg'
+    },
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        selected: 1
+    },
+
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur,
+        color: '#202040'
+    }]
 });

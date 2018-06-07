@@ -1,327 +1,638 @@
-/* ****************************************************************************
- * Start Flags series code													*
- *****************************************************************************/
+/**
+ * (c) 2010-2017 Torstein Honsi
+ *
+ * License: www.highcharts.com/license
+ */
+'use strict';
+import H from './Globals.js';
+import './Utilities.js';
+import './Series.js';
+import './SvgRenderer.js';
+import onSeriesMixin from '../mixins/on-series.js';
+var addEvent = H.addEvent,
+    each = H.each,
+    merge = H.merge,
+    noop = H.noop,
+    Renderer = H.Renderer,
+    Series = H.Series,
+    seriesType = H.seriesType,
+    SVGRenderer = H.SVGRenderer,
+    TrackerMixin = H.TrackerMixin,
+    VMLRenderer = H.VMLRenderer,
+    symbols = SVGRenderer.prototype.symbols;
 
-var symbols = SVGRenderer.prototype.symbols;
+/**
+ * The Flags series.
+ *
+ * @constructor seriesTypes.flags
+ * @augments seriesTypes.column
+ */
+/**
+ * Flags are used to mark events in stock charts. They can be added on the
+ * timeline, or attached to a specific series.
+ *
+ * @sample       stock/demo/flags-general/ Flags on a line series
+ * @extends      {plotOptions.column}
+ * @excluding    animation,borderColor,borderRadius,borderWidth,colorByPoint,
+ *               dataGrouping,pointPadding,pointWidth,turboThreshold
+ * @product      highstock
+ * @optionparent plotOptions.flags
+ */
+seriesType('flags', 'column', {
 
-// 1 - set default options
-defaultPlotOptions.flags = merge(defaultPlotOptions.column, {
-	fillColor: 'white',
-	lineWidth: 1,
-	pointRange: 0, // #673
-	//radius: 2,
-	shape: 'flag',
-	stackDistance: 12,
-	states: {
-		hover: {
-			lineColor: 'black',
-			fillColor: '#FCFFC5'
-		}
-	},
-	style: {
-		fontSize: '11px',
-		fontWeight: 'bold',
-		textAlign: 'center'
-	},
-	tooltip: {
-		pointFormat: '{point.text}<br/>'
-	},
-	threshold: null,
-	y: -30
-});
+    /**
+     * In case the flag is placed on a series, on what point key to place
+     * it. Line and columns have one key, `y`. In range or OHLC-type series,
+     * however, the flag can optionally be placed on the `open`, `high`,
+     *  `low` or `close` key.
+     *
+     * @validvalue ["y", "open", "high", "low", "close"]
+     * @type       {String}
+     * @sample     {highstock} stock/plotoptions/flags-onkey/
+     *             Range series, flag on high
+     * @default    y
+     * @since      4.2.2
+     * @product    highstock
+     * @apioption  plotOptions.flags.onKey
+     */
 
-// 2 - Create the CandlestickSeries object
-seriesTypes.flags = extendClass(seriesTypes.column, {
-	type: 'flags',
-	sorted: false,
-	noSharedTooltip: true,
-	allowDG: false,
-	takeOrdinalPosition: false, // #1074
-	trackerGroups: ['markerGroup'],
-	forceCrop: true,
-	/**
-	 * Inherit the initialization from base Series
-	 */
-	init: Series.prototype.init,
+    /**
+     * The id of the series that the flags should be drawn on. If no id
+     * is given, the flags are drawn on the x axis.
+     *
+     * @type      {String}
+     * @sample    {highstock} stock/plotoptions/flags/
+     *            Flags on series and on x axis
+     * @default   undefined
+     * @product   highstock
+     * @apioption plotOptions.flags.onSeries
+     */
 
-	/**
-	 * One-to-one mapping from options to SVG attributes
-	 */
-	pointAttrToOptions: { // mapping between SVG attributes and the corresponding options
-		fill: 'fillColor',
-		stroke: 'color',
-		'stroke-width': 'lineWidth',
-		r: 'radius'
-	},
+    pointRange: 0, // #673
 
-	/**
-	 * Extend the translate method by placing the point on the related series
-	 */
-	translate: function () {
+    /**
+     * Whether the flags are allowed to overlap sideways. If `false`, the flags
+     * are moved sideways using an algorithm that seeks to place every flag as
+     * close as possible to its original position.
+     *
+     * @sample {highstock} stock/plotoptions/flags-allowoverlapx
+     *         Allow sideways overlap
+     * @since  6.0.4
+     */
+    allowOverlapX: false,
 
-		seriesTypes.column.prototype.translate.apply(this);
+    /**
+     * The shape of the marker. Can be one of "flag", "circlepin", "squarepin",
+     * or an image on the format `url(/path-to-image.jpg)`. Individual
+     * shapes can also be set for each point.
+     *
+     * @validvalue ["flag", "circlepin", "squarepin"]
+     * @sample     {highstock} stock/plotoptions/flags/ Different shapes
+     * @product    highstock
+     */
+    shape: 'flag',
 
-		var series = this,
-			options = series.options,
-			chart = series.chart,
-			points = series.points,
-			cursor = points.length - 1,
-			point,
-			lastPoint,
-			optionsOnSeries = options.onSeries,
-			onSeries = optionsOnSeries && chart.get(optionsOnSeries),
-			step = onSeries && onSeries.options.step,
-			onData = onSeries && onSeries.points,
-			i = onData && onData.length,
-			xAxis = series.xAxis,
-			xAxisExt = xAxis.getExtremes(),
-			leftPoint,
-			lastX,
-			rightPoint,
-			currentDataGrouping;
+    /**
+     * When multiple flags in the same series fall on the same value, this
+     * number determines the vertical offset between them.
+     *
+     * @sample  {highstock} stock/plotoptions/flags-stackdistance/
+     *          A greater stack distance
+     * @product highstock
+     */
+    stackDistance: 12,
 
-		// relate to a master series
-		if (onSeries && onSeries.visible && i) {
-			currentDataGrouping = onSeries.currentDataGrouping;
-			lastX = onData[i - 1].x + (currentDataGrouping ? currentDataGrouping.totalRange : 0); // #2374
+    /**
+     * Text alignment for the text inside the flag.
+     *
+     * @validvalue ["left", "center", "right"]
+     * @since      5.0.0
+     * @product    highstock
+     */
+    textAlign: 'center',
 
-			// sort the data points
-			points.sort(function (a, b) {
-				return (a.x - b.x);
-			});
+    /**
+     * Specific tooltip options for flag series. Flag series tooltips are
+     * different from most other types in that a flag doesn't have a data
+     * value, so the tooltip rather displays the `text` option for each
+     * point.
+     *
+     * @type      {Object}
+     * @extends   plotOptions.series.tooltip
+     * @excluding changeDecimals,valueDecimals,valuePrefix,valueSuffix
+     * @product   highstock
+     */
+    tooltip: {
+        pointFormat: '{point.text}<br/>'
+    },
 
-			while (i-- && points[cursor]) {
-				point = points[cursor];
-				leftPoint = onData[i];
-				
-				if (leftPoint.x <= point.x && leftPoint.plotY !== UNDEFINED) {
-					if (point.x <= lastX) { // #803
-					
-						point.plotY = leftPoint.plotY;
-					
-						// interpolate between points, #666
-						if (leftPoint.x < point.x && !step) { 
-							rightPoint = onData[i + 1];
-							if (rightPoint && rightPoint.plotY !== UNDEFINED) {
-								point.plotY += 
-									((point.x - leftPoint.x) / (rightPoint.x - leftPoint.x)) * // the distance ratio, between 0 and 1 
-									(rightPoint.plotY - leftPoint.plotY); // the y distance
-							}
-						}
-					}
-					cursor--;
-					i++; // check again for points in the same x position
-					if (cursor < 0) {
-						break;
-					}
-				}
-			}
-		}
+    threshold: null,
 
-		// Add plotY position and handle stacking
-		each(points, function (point, i) {
-			
-			// Undefined plotY means the point is either on axis, outside series range or hidden series.
-			// If the series is outside the range of the x axis it should fall through with 
-			// an undefined plotY, but then we must remove the shapeArgs (#847).
-			if (point.plotY === UNDEFINED) {
-				if (point.x >= xAxisExt.min && point.x <= xAxisExt.max) { // we're inside xAxis range
-					point.plotY = chart.chartHeight - xAxis.bottom - (xAxis.opposite ? xAxis.height : 0) + xAxis.offset - chart.plotTop;
-				} else {
-					point.shapeArgs = {}; // 847
-				}
-			}
-			// if multiple flags appear at the same x, order them into a stack
-			lastPoint = points[i - 1];
-			if (lastPoint && lastPoint.plotX === point.plotX) {
-				if (lastPoint.stackIndex === UNDEFINED) {
-					lastPoint.stackIndex = 0;
-				}
-				point.stackIndex = lastPoint.stackIndex + 1;
-			}
-					
-		});
+    /**
+     * The text to display on each flag. This can be defined on series level,
+     *  or individually for each point. Defaults to `"A"`.
+     *
+     * @type      {String}
+     * @default   A
+     * @product   highstock
+     * @apioption plotOptions.flags.title
+     */
 
+    /**
+     * The y position of the top left corner of the flag relative to either
+     * the series (if onSeries is defined), or the x axis. Defaults to
+     * `-30`.
+     *
+     * @product highstock
+     */
+    y: -30,
 
-	},
+    /**
+     * Whether to use HTML to render the flag texts. Using HTML allows for
+     * advanced formatting, images and reliable bi-directional text rendering.
+     * Note that exported images won't respect the HTML, and that HTML
+     * won't respect Z-index settings.
+     *
+     * @type      {Boolean}
+     * @default   false
+     * @since     1.3
+     * @product   highstock
+     * @apioption plotOptions.flags.useHTML
+     */
 
-	/**
-	 * Draw the markers
-	 */
-	drawPoints: function () {
-		var series = this,
-			pointAttr,
-			seriesPointAttr = series.pointAttr[''],
-			points = series.points,
-			chart = series.chart,
-			renderer = chart.renderer,
-			plotX,
-			plotY,
-			options = series.options,
-			optionsY = options.y,
-			shape,
-			i,
-			point,
-			graphic,
-			stackIndex,
-			crisp = (options.lineWidth % 2 / 2),
-			anchorX,
-			anchorY,
-			outsideRight;
+    /*= if (build.classic) { =*/
 
-		i = points.length;
-		while (i--) {
-			point = points[i];
-			outsideRight = point.plotX > series.xAxis.len;
-			plotX = point.plotX + (outsideRight ? crisp : -crisp);
-			stackIndex = point.stackIndex;
-			shape = point.options.shape || options.shape;
-			plotY = point.plotY;
-			if (plotY !== UNDEFINED) {
-				plotY = point.plotY + optionsY + crisp - (stackIndex !== UNDEFINED && stackIndex * options.stackDistance);
-			}
-			anchorX = stackIndex ? UNDEFINED : point.plotX + crisp; // skip connectors for higher level stacked points
-			anchorY = stackIndex ? UNDEFINED : point.plotY;
+    /**
+     * The fill color for the flags.
+     *
+     * @type      {Color}
+     * @default   #ffffff
+     * @product   highstock
+     */
+    fillColor: '${palette.backgroundColor}',
 
-			graphic = point.graphic;
+    /**
+     * The color of the line/border of the flag.
+     *
+     * In styled mode, the stroke is set in the
+     * `.highcharts-flag-series.highcharts-point` rule.
+     *
+     * @type      {Color}
+     * @default   #000000
+     * @product   highstock
+     * @apioption plotOptions.flags.lineColor
+     */
 
-			// only draw the point if y is defined and the flag is within the visible area
-			if (plotY !== UNDEFINED && plotX >= 0 && !outsideRight) {
-				// shortcuts
-				pointAttr = point.pointAttr[point.selected ? 'select' : ''] || seriesPointAttr;
-				if (graphic) { // update
-					graphic.attr({
-						x: plotX,
-						y: plotY,
-						r: pointAttr.r,
-						anchorX: anchorX,
-						anchorY: anchorY
-					});
-				} else {
-					graphic = point.graphic = renderer.label(
-						point.options.title || options.title || 'A',
-						plotX,
-						plotY,
-						shape,
-						anchorX,
-						anchorY,
-						options.useHTML
-					)
-					.css(merge(options.style, point.style))
-					.attr(pointAttr)
-					.attr({
-						align: shape === 'flag' ? 'left' : 'center',
-						width: options.width,
-						height: options.height
-					})
-					.add(series.markerGroup)
-					.shadow(options.shadow);
+    /**
+     * The pixel width of the flag's line/border.
+     *
+     * @product highstock
+     */
+    lineWidth: 1,
 
-				}
+    states: {
 
-				// Set the tooltip anchor position
-				point.tooltipPos = [plotX, plotY];
+        /**
+         * @extends plotOptions.column.states.hover
+         * @product highstock
+         */
+        hover: {
 
-			} else if (graphic) {
-				point.graphic = graphic.destroy();
-			}
+            /**
+             * The color of the line/border of the flag.
+             *
+             * @type    {Color}
+             * @default #000000
+             * @product highstock
+             */
+            lineColor: '${palette.neutralColor100}',
 
-		}
+            /**
+             * The fill or background color of the flag.
+             *
+             * @type    {Color}
+             * @default #ccd6eb
+             * @product highstock
+             */
+            fillColor: '${palette.highlightColor20}'
+        }
+    },
 
-	},
+    /**
+     * The text styles of the flag.
+     *
+     * In styled mode, the styles are set in the
+     * `.highcharts-flag-series .highcharts-point` rule.
+     *
+     * @type    {CSSObject}
+     * @default { "fontSize": "11px", "fontWeight": "bold" }
+     * @product highstock
+     */
+    style: {
+        fontSize: '11px',
+        fontWeight: 'bold'
+    }
+    /*= } =*/
 
-	/**
-	 * Extend the column trackers with listeners to expand and contract stacks
-	 */
-	drawTracker: function () {
-		var series = this,
-			points = series.points;
-		
-		TrackerMixin.drawTrackerPoint.apply(this);
+}, /** @lends seriesTypes.flags.prototype */ {
+    sorted: false,
+    noSharedTooltip: true,
+    allowDG: false,
+    takeOrdinalPosition: false, // #1074
+    trackerGroups: ['markerGroup'],
+    forceCrop: true,
+    /**
+     * Inherit the initialization from base Series.
+     */
+    init: Series.prototype.init,
 
-		// Bring each stacked flag up on mouse over, this allows readability of vertically
-		// stacked elements as well as tight points on the x axis. #1924.
-		each(points, function (point) {
-			var graphic = point.graphic;
-			if (graphic) {
-				addEvent(graphic.element, 'mouseover', function () {
+    /*= if (build.classic) { =*/
+    /**
+     * Get presentational attributes
+     */
+    pointAttribs: function (point, state) {
+        var options = this.options,
+            color = (point && point.color) || this.color,
+            lineColor = options.lineColor,
+            lineWidth = (point && point.lineWidth),
+            fill = (point && point.fillColor) || options.fillColor;
 
-					// Raise this point
-					if (point.stackIndex > 0 && !point.raised) {
-						point._y = graphic.y;
-						graphic.attr({
-							y: point._y - 8
-						});
-						point.raised = true;
-					}
+        if (state) {
+            fill = options.states[state].fillColor;
+            lineColor = options.states[state].lineColor;
+            lineWidth = options.states[state].lineWidth;
+        }
 
-					// Revert other raised points
-					each(points, function (otherPoint) {
-						if (otherPoint !== point && otherPoint.raised && otherPoint.graphic) {
-							otherPoint.graphic.attr({
-								y: otherPoint._y
-							});
-							otherPoint.raised = false;
-						}
-					});
-				});
-			}
-		});
-	},
+        return {
+            'fill': fill || color,
+            'stroke': lineColor || color,
+            'stroke-width': lineWidth || options.lineWidth || 0
+        };
+    },
+    /*= } =*/
 
-	/**
-	 * Disable animation
-	 */
-	animate: noop
+    translate: onSeriesMixin.translate,
+    getPlotBox: onSeriesMixin.getPlotBox,
+
+    /**
+     * Draw the markers
+     */
+    drawPoints: function () {
+        var series = this,
+            points = series.points,
+            chart = series.chart,
+            renderer = chart.renderer,
+            plotX,
+            plotY,
+            inverted = chart.inverted,
+            options = series.options,
+            optionsY = options.y,
+            shape,
+            i,
+            point,
+            graphic,
+            stackIndex,
+            anchorY,
+            attribs,
+            outsideRight,
+            yAxis = series.yAxis,
+            boxesMap = {},
+            boxes = [];
+
+        i = points.length;
+        while (i--) {
+            point = points[i];
+            outsideRight =
+                (inverted ? point.plotY : point.plotX) > series.xAxis.len;
+            plotX = point.plotX;
+            stackIndex = point.stackIndex;
+            shape = point.options.shape || options.shape;
+            plotY = point.plotY;
+
+            if (plotY !== undefined) {
+                plotY = point.plotY + optionsY -
+                    (
+                        stackIndex !== undefined &&
+                        stackIndex * options.stackDistance
+                    );
+            }
+            // skip connectors for higher level stacked points
+            point.anchorX = stackIndex ? undefined : point.plotX;
+            anchorY = stackIndex ? undefined : point.plotY;
+
+            graphic = point.graphic;
+
+            // Only draw the point if y is defined and the flag is within
+            // the visible area
+            if (plotY !== undefined && plotX >= 0 && !outsideRight) {
+
+                // Create the flag
+                if (!graphic) {
+                    graphic = point.graphic = renderer.label(
+                        '',
+                        null,
+                        null,
+                        shape,
+                        null,
+                        null,
+                        options.useHTML
+                    )
+                    /*= if (build.classic) { =*/
+                    .attr(series.pointAttribs(point))
+                    .css(merge(options.style, point.style))
+                    /*= } =*/
+                    .attr({
+                        align: shape === 'flag' ? 'left' : 'center',
+                        width: options.width,
+                        height: options.height,
+                        'text-align': options.textAlign
+                    })
+                    .addClass('highcharts-point')
+                    .add(series.markerGroup);
+
+                    // Add reference to the point for tracker (#6303)
+                    if (point.graphic.div) {
+                        point.graphic.div.point = point;
+                    }
+
+                    /*= if (build.classic) { =*/
+                    graphic.shadow(options.shadow);
+                    /*= } =*/
+                    graphic.isNew = true;
+                }
+
+                if (plotX > 0) { // #3119
+                    plotX -= graphic.strokeWidth() % 2; // #4285
+                }
+
+                // Plant the flag
+                attribs = {
+                    y: plotY,
+                    anchorY: anchorY
+                };
+                if (options.allowOverlapX) {
+                    attribs.x = plotX;
+                    attribs.anchorX = point.anchorX;
+                }
+                graphic.attr({
+                    text: point.options.title || options.title || 'A'
+                })[graphic.isNew ? 'attr' : 'animate'](attribs);
+
+                // Rig for the distribute function
+                if (!options.allowOverlapX) {
+                    if (!boxesMap[point.plotX]) {
+                        boxesMap[point.plotX] = {
+                            align: 0,
+                            size: graphic.width,
+                            target: plotX,
+                            anchorX: plotX
+                        };
+                    } else {
+                        boxesMap[point.plotX].size = Math.max(
+                            boxesMap[point.plotX].size,
+                            graphic.width
+                        );
+                    }
+                }
+
+                // Set the tooltip anchor position
+                point.tooltipPos = [
+                    plotX,
+                    plotY + yAxis.pos - chart.plotTop
+                ]; // #6327
+
+            } else if (graphic) {
+                point.graphic = graphic.destroy();
+            }
+
+        }
+
+        // Handle X-dimension overlapping
+        if (!options.allowOverlapX) {
+            H.objectEach(boxesMap, function (box) {
+                box.plotX = box.anchorX;
+                boxes.push(box);
+            });
+
+            H.distribute(boxes, inverted ? yAxis.len : this.xAxis.len, 100);
+
+            each(points, function (point) {
+                var box = point.graphic && boxesMap[point.plotX];
+                if (box) {
+                    point.graphic[point.graphic.isNew ? 'attr' : 'animate']({
+                        x: box.pos,
+                        anchorX: point.anchorX
+                    });
+                    point.graphic.isNew = false;
+                }
+            });
+        }
+
+        // Might be a mix of SVG and HTML and we need events for both (#6303)
+        if (options.useHTML) {
+            H.wrap(series.markerGroup, 'on', function (proceed) {
+                return H.SVGElement.prototype.on.apply(
+                    // for HTML
+                    proceed.apply(this, [].slice.call(arguments, 1)),
+                    // and for SVG
+                    [].slice.call(arguments, 1));
+            });
+        }
+
+    },
+
+    /**
+     * Extend the column trackers with listeners to expand and contract stacks
+     */
+    drawTracker: function () {
+        var series = this,
+            points = series.points;
+
+        TrackerMixin.drawTrackerPoint.apply(this);
+
+        /**
+         * Bring each stacked flag up on mouse over, this allows readability
+         * of vertically stacked elements as well as tight points on
+         * the x axis. #1924.
+         */
+        each(points, function (point) {
+            var graphic = point.graphic;
+            if (graphic) {
+                addEvent(graphic.element, 'mouseover', function () {
+
+                    // Raise this point
+                    if (point.stackIndex > 0 && !point.raised) {
+                        point._y = graphic.y;
+                        graphic.attr({
+                            y: point._y - 8
+                        });
+                        point.raised = true;
+                    }
+
+                    // Revert other raised points
+                    each(points, function (otherPoint) {
+                        if (
+                            otherPoint !== point &&
+                            otherPoint.raised &&
+                            otherPoint.graphic
+                        ) {
+                            otherPoint.graphic.attr({
+                                y: otherPoint._y
+                            });
+                            otherPoint.raised = false;
+                        }
+                    });
+                });
+            }
+        });
+    },
+
+    animate: noop, // Disable animation
+    buildKDTree: noop,
+    setClip: noop,
+    /**
+     * Don't invert the flag marker group (#4960)
+     */
+    invertGroups: noop
 
 });
 
 // create the flag icon with anchor
 symbols.flag = function (x, y, w, h, options) {
-	var anchorX = (options && options.anchorX) || x,
-		anchorY = (options &&  options.anchorY) || y;
+    var anchorX = (options && options.anchorX) || x,
+        anchorY = (options &&  options.anchorY) || y;
 
-	return [
-		'M', anchorX, anchorY,
-		'L', x, y + h,
-		x, y,
-		x + w, y,
-		x + w, y + h,
-		x, y + h,
-		'M', anchorX, anchorY,
-		'Z'
-	];
+    return symbols.circle(anchorX - 1, anchorY - 1, 2, 2).concat(
+        [
+            'M', anchorX, anchorY,
+            'L', x, y + h,
+            x, y,
+            x + w, y,
+            x + w, y + h,
+            x, y + h,
+            'Z'
+        ]
+    );
 };
 
-// create the circlepin and squarepin icons with anchor
-each(['circle', 'square'], function (shape) {
-	symbols[shape + 'pin'] = function (x, y, w, h, options) {
+/*
+ * Create the circlepin and squarepin icons with anchor
+ */
+function createPinSymbol(shape) {
+    symbols[shape + 'pin'] = function (x, y, w, h, options) {
 
-		var anchorX = options && options.anchorX,
-			anchorY = options &&  options.anchorY,
-			path = symbols[shape](x, y, w, h),
-			labelTopOrBottomY;
+        var anchorX = options && options.anchorX,
+            anchorY = options &&  options.anchorY,
+            path,
+            labelTopOrBottomY;
 
-		if (anchorX && anchorY) {
-			// if the label is below the anchor, draw the connecting line from the top edge of the label
-			// otherwise start drawing from the bottom edge
-			labelTopOrBottomY = (y > anchorY) ? y : y + h;
-			path.push('M', anchorX, labelTopOrBottomY, 'L', anchorX, anchorY);
-		}
+        // For single-letter flags, make sure circular flags are not taller
+        // than their width
+        if (shape === 'circle' && h > w) {
+            x -= Math.round((h - w) / 2);
+            w = h;
+        }
 
-		return path;
-	};
-});
+        path = symbols[shape](x, y, w, h);
 
-// The symbol callbacks are generated on the SVGRenderer object in all browsers. Even
-// VML browsers need this in order to generate shapes in export. Now share
-// them with the VMLRenderer.
-if (Renderer === Highcharts.VMLRenderer) {
-	each(['flag', 'circlepin', 'squarepin'], function (shape) {
-		VMLRenderer.prototype.symbols[shape] = symbols[shape];
-	});
+        if (anchorX && anchorY) {
+            /**
+             * If the label is below the anchor, draw the connecting line
+             * from the top edge of the label
+             * otherwise start drawing from the bottom edge
+             */
+            labelTopOrBottomY = (y > anchorY) ? y : y + h;
+            path.push(
+                'M',
+                shape === 'circle' ? path[1] - path[4] : path[1] + path[4] / 2,
+                labelTopOrBottomY,
+                'L',
+                anchorX,
+                anchorY
+            );
+            path = path.concat(
+                symbols.circle(anchorX - 1, anchorY - 1, 2, 2)
+            );
+        }
+
+        return path;
+    };
 }
+createPinSymbol('circle');
+createPinSymbol('square');
 
-/* ****************************************************************************
- * End Flags series code													  *
- *****************************************************************************/
+/*= if (build.classic) { =*/
+/**
+ * The symbol callbacks are generated on the SVGRenderer object in all browsers.
+ * Even VML browsers need this in order to generate shapes in export. Now share
+ * them with the VMLRenderer.
+ */
+if (Renderer === VMLRenderer) {
+    each(['flag', 'circlepin', 'squarepin'], function (shape) {
+        VMLRenderer.prototype.symbols[shape] = symbols[shape];
+    });
+}
+/*= } =*/
+
+/**
+ * A `flags` series. If the [type](#series.flags.type) option is not
+ * specified, it is inherited from [chart.type](#chart.type).
+ *
+ * @type      {Object}
+ * @extends   series,plotOptions.flags
+ * @excluding dataParser,dataURL
+ * @product   highstock
+ * @apioption series.flags
+ */
+
+/**
+ * An array of data points for the series. For the `flags` series type,
+ * points can be given in the following ways:
+ *
+ * 1.  An array of objects with named values. The objects are point
+ * configuration objects as seen below. If the total number of data
+ * points exceeds the series' [turboThreshold](#series.flags.turboThreshold),
+ * this option is not available.
+ *
+ *  ```js
+ *     data: [{
+ *     x: 1,
+ *     title: "A",
+ *     text: "First event"
+ * }, {
+ *     x: 1,
+ *     title: "B",
+ *     text: "Second event"
+ * }]</pre>
+ *
+ * @type {Array<Object>}
+ * @extends series.line.data
+ * @excluding y,dataLabels,marker,name
+ * @product highstock
+ * @apioption series.flags.data
+ */
+
+/**
+ * The fill color of an individual flag. By default it inherits from
+ * the series color.
+ *
+ * @type      {Color}
+ * @product   highstock
+ * @apioption series.flags.data.fillColor
+ */
+
+/**
+ * The longer text to be shown in the flag's tooltip.
+ *
+ * @type      {String}
+ * @product   highstock
+ * @apioption series.flags.data.text
+ */
+
+/**
+ * The short text to be shown on the flag.
+ *
+ * @type      {String}
+ * @product   highstock
+ * @apioption series.flags.data.title
+ */

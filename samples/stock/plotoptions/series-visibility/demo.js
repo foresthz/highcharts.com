@@ -1,25 +1,24 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        rangeSelector: {
-            selected: 1
-        },
+Highcharts.stockChart('container', {
 
-        legend: {
-            enabled: true,
-            layout: 'vertical',
-            align: 'right',
-            verticalAlign: 'top',
-            y: 100
-        },
+    rangeSelector: {
+        selected: 1
+    },
 
-        series: [{
-            name: 'ADBE',
-            data: ADBE
-        }, {
-            name: 'MSFT',
-            data: MSFT,
-            visible: false
-        }]
-    });
+    legend: {
+        enabled: true,
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'top',
+        y: 100
+    },
+
+    series: [{
+        name: 'ADBE',
+        data: ADBE
+    }, {
+        name: 'MSFT',
+        data: MSFT,
+        visible: false
+    }]
 });

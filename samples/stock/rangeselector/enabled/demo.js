@@ -1,13 +1,12 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        rangeSelector: {
-            enabled: false
-        },
+Highcharts.stockChart('container', {
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        enabled: false
+    },
+
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur
+    }]
 });

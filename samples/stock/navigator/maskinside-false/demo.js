@@ -1,21 +1,20 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        title: {
-            text: 'Navigator mask is outside zoomed range'
-        },
+Highcharts.stockChart('container', {
 
-        navigator: {
-            maskInside: false
-        },
+    title: {
+        text: 'Navigator mask is outside zoomed range'
+    },
 
-        rangeSelector: {
-            selected: 1
-        },
+    navigator: {
+        maskInside: false
+    },
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        selected: 1
+    },
+
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur
+    }]
 });

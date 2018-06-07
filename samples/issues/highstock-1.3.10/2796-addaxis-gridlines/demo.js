@@ -14,7 +14,7 @@ $(function () {
             title: {
                 text: 'OHLC'
             },
-            height: 50,
+            height: '25%',
             lineWidth: 2,
             id: 'primary'
         }],
@@ -23,15 +23,15 @@ $(function () {
             animation: false,
             type: 'line',
             name: 'AAPL',
-            data: [1,4,2,3]
+            data: [1, 4, 2, 3]
         }]
     }, function (chart) {
 
         chart.addAxis({
             id: 'secondary',
             offset: 0,
-            height: 150,
-            top: 150,
+            height: '70%',
+            top: '30%',
             min: 0,
             max: 100,
             lineWidth: 2

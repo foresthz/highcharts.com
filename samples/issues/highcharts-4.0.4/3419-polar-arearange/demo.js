@@ -8,7 +8,7 @@ $(function () {
         },
 
         title: {
-        	text: 'Polar arearange'
+            text: 'Polar arearange'
         },
         yAxis: {
             min: 0,
@@ -16,7 +16,6 @@ $(function () {
         },
 
         series: [{
-            connectEnds: true,
             data: [
                 [1, 2],
                 [1, 2],

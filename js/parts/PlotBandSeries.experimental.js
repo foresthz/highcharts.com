@@ -1,88 +1,74 @@
+/**
+ * (c) 2010-2017 Torstein Honsi
+ *
+ * License: www.highcharts.com/license
+ */
 /* ****************************************************************************
- * Start PlotBand series code											      *
+ * Start PlotBand series code                                                 *
  *****************************************************************************/
 /**
  * This is an experiment of implementing plotBands and plotLines as a series.
- * It could solve problems with export, updating etc., add tooltip and mouse events,
- * and provide a more compact and consistent implementation.
+ * It could solve problems with export, updating etc., add tooltip and mouse
+ * events, and provide a more compact and consistent implementation.
  * Demo: http://jsfiddle.net/highcharts/5Rbf6/
  */
+'use strict';
+import H from './Globals.js';
+import './Utilities.js';
+import './Series.js';
+import './Options.js';
+var seriesType = H.seriesType,
+    each = H.each,
+    Series = H.Series;
 
-(function (H) {
+seriesType('plotband', 'column', {
+    lineWidth: 0,
+    threshold: null
+}, {
+    /*= if (build.classic) { =*/
+    // mapping between SVG attributes and the corresponding options
+    pointAttrToOptions: {
+        fill: 'color',
+        stroke: 'lineColor',
+        'stroke-width': 'lineWidth'
+    },
+    /*= } =*/
+    animate: function () {},
 
-var seriesTypes = H.seriesTypes,
-	merge = H.merge,
-	defaultPlotOptions = H.getOptions().plotOptions,
-	extendClass = H.extendClass,
-	each = H.each,
-	Series = H.Series;
+    translate: function () {
+        var series = this,
+            xAxis = series.xAxis,
+            yAxis = series.yAxis;
 
-// 1 - set default options
-defaultPlotOptions.plotband = merge(defaultPlotOptions.column, {
-	lineWidth: 0,
-	//onXAxis: false,
-	threshold: null
-});
+        Series.prototype.translate.apply(series);
 
-// 2 - Create the CandlestickSeries object
-seriesTypes.plotband = extendClass(seriesTypes.column, {
-	type: 'plotband',
+        each(series.points, function (point) {
+            var onXAxis = point.onXAxis,
+                ownAxis = onXAxis ? xAxis : yAxis,
+                otherAxis = onXAxis ? yAxis : xAxis,
+                from = ownAxis.toPixels(point.from, true),
+                to = ownAxis.toPixels(point.to, true),
+                start = Math.min(from, to),
+                width = Math.abs(to - from);
 
-	/**
-	 * One-to-one mapping from options to SVG attributes
-	 */
-	pointAttrToOptions: { // mapping between SVG attributes and the corresponding options
-		fill: 'color',
-		stroke: 'lineColor',
-		'stroke-width': 'lineWidth'
-	},
-
-	animate: function () {},
-
-	translate: function () {
-		var series = this,
-			xAxis = series.xAxis,
-			yAxis = series.yAxis;
-
-		Series.prototype.translate.apply(series);
-
-		each(series.points, function (point) {
-			var onXAxis = point.onXAxis,
-				ownAxis = onXAxis ? xAxis : yAxis,
-				otherAxis = onXAxis ? yAxis : xAxis,
-				from = ownAxis.toPixels(point.from, true),
-				to = ownAxis.toPixels(point.to, true),
-				start = Math.min(from, to),
-				width = Math.abs(to - from);
-
-			point.plotY = 1; // lure ColumnSeries.drawPoints
-			point.shapeType = 'rect';
-			point.shapeArgs = ownAxis.horiz ? {
-				x: start,
-				y: 0,
-				width: width,
-				height: otherAxis.len
-			} : {
-				x: 0,
-				y: start,
-				width: otherAxis.len,
-				height: width
-			};
-		});
-	},
-
-	/**
-	 * Draw the data points
-	 */
-	_drawPoints: function () {
-		
-	}
+            point.plotY = 1; // lure ColumnSeries.drawPoints
+            point.shapeType = 'rect';
+            point.shapeArgs = ownAxis.horiz ? {
+                x: start,
+                y: 0,
+                width: width,
+                height: otherAxis.len
+            } : {
+                x: 0,
+                y: start,
+                width: otherAxis.len,
+                height: width
+            };
+        });
+    }
 
 
 });
-
-}(Highcharts));
-
 /* ****************************************************************************
- * End PlotBand series code												      *
+ * End PlotBand series code                                                   *
  *****************************************************************************/

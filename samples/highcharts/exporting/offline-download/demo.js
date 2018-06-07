@@ -1,161 +1,133 @@
-$(function () {
 
-    /**
-     * Experimental Highcharts plugin to allow download to PNG (through canvg) and SVG
-     * using the HTML5 download attribute.
-     * 
-     * WARNING: This plugin uses the HTML5 download attribute which is not generally 
-     * supported. See http://caniuse.com/#feat=download for current uptake.
-     *
-     * TODO:
-     * - Add crossbrowser support by utilizing the Downloadify Flash library?
-     * - Option to fall back to online export server on missing support. Display human 
-     *   readable error if not.
-     */
-    (function (Highcharts) {
 
-        // Dummy object so we can reuse our canvas-tools.js without errors
-        Highcharts.CanVGRenderer = {};
+/* Automate testing of module somewhat */
 
-        /**
-         * Downloads a script and executes a callback when done.
-         * @param {String} scriptLocation
-         * @param {Function} callback
-         */
-        function getScript(scriptLocation, callback) {
-            var head = document.getElementsByTagName('head')[0],
-                script = document.createElement('script');
+var nav = Highcharts.win.navigator,
+    isMSBrowser = /Edge\/|Trident\/|MSIE /.test(nav.userAgent),
+    isEdgeBrowser = /Edge\/\d+/.test(nav.userAgent),
+    containerEl = document.getElementById('container'),
+    parentEl = containerEl.parentNode,
+    oldDownloadURL = Highcharts.downloadURL;
 
-            script.type = 'text/javascript';
-            script.src = scriptLocation;
-            script.onload = callback;
+function addText(text) {
+    var heading = document.createElement('h2');
+    heading.innerHTML = text;
+    parentEl.appendChild(heading);
+}
 
-            head.appendChild(script);
+function addURLView(title, url) {
+    var iframe = document.createElement('iframe');
+    if (isMSBrowser && Highcharts.isObject(url)) {
+        addText(title +
+        ': Microsoft browsers do not support Blob iframe.src, test manually'
+        );
+        return;
+    }
+    iframe.src = url;
+    iframe.width = 400;
+    iframe.height = 300;
+    iframe.title = title;
+    iframe.style.display = 'inline-block';
+    parentEl.appendChild(iframe);
+}
+
+function fallbackHandler(options) {
+    if (options.type !== 'image/svg+xml' && isEdgeBrowser ||
+        options.type === 'application/pdf' && isMSBrowser) {
+        addText(options.type + ' fell back on purpose');
+    } else {
+        throw 'Should not have to fall back for this combination. ' +
+            options.type;
+    }
+}
+
+Highcharts.downloadURL = function (dataURL, filename) {
+    // Emulate toBlob behavior for long URLs
+    if (dataURL.length > 2000000) {
+        dataURL = Highcharts.dataURLtoBlob(dataURL);
+        if (!dataURL) {
+            throw 'Data URL length limit reached';
         }
+    }
+    // Show result in an iframe instead of downloading
+    addURLView(filename, dataURL);
+};
 
-        /**
-         * Add a new method to the Chart object to invoice a local download
-         */
-        Highcharts.Chart.prototype.exportChartLocal = function (options) {
+Highcharts.Chart.prototype.exportTest = function (type) {
+    this.exportChartLocal({
+        type: type
+    }, {
+        title: {
+            text: type
+        },
+        subtitle: {
+            text: false
+        }
+    });
+};
 
-            var chart = this,
-                svg = this.getSVG(), // Get the SVG
-                canvas,
-                a,
-                href,
-                extension,
-                download = function () {
+Highcharts.Chart.prototype.callbacks.push(function (chart) {
+    if (!chart.options.chart.forExport) {
+        var menu = chart.exportSVGElements && chart.exportSVGElements[0],
+            oldHandler;
+        chart.exportTest('image/png');
+        chart.exportTest('image/jpeg');
+        chart.exportTest('image/svg+xml');
+        chart.exportTest('application/pdf');
 
-                    var blob;
+        // Allow manual testing by resetting downloadURL handler when trying
+        // to export manually
+        if (menu) {
+            oldHandler = menu.element.onclick;
+            menu.element.onclick = function () {
+                Highcharts.downloadURL = oldDownloadURL;
+                oldHandler.call(this);
+            };
+        }
+    }
+});
 
-                    // IE specific
-                    if (navigator.msSaveOrOpenBlob) { 
+/* End of automation code */
 
-                        // Get PNG blob
-                        if (extension === 'png') {
-                            blob = canvas.msToBlob();
 
-                        // Get SVG blob
-                        } else {
-                            blob = new MSBlobBuilder;
-                            blob.append(svg);
-                            blob = blob.getBlob('image/svg+xml');
-                        }
-
-                        navigator.msSaveOrOpenBlob(blob, 'chart.' + extension);
-
-                    // HTML5 download attribute
-                    } else {
-                        a = document.createElement('a');
-                        a.href = href;
-                        a.download = 'chart.' + extension;
-                        document.body.appendChild(a);
-                        a.click();
-                        a.remove();
+Highcharts.chart('container', {
+    exporting: {
+        chartOptions: { // specific options for the exported image
+            plotOptions: {
+                series: {
+                    dataLabels: {
+                        enabled: true
                     }
-                },
-                prepareCanvas = function () {
-                    canvas = document.createElement('canvas'); // Create an empty canvas
-                    window.canvg(canvas, svg); // Render the SVG on the canvas
-
-                    href = canvas.toDataURL('image/png');
-                    extension = 'png';
-                };
-
-            // Add an anchor and apply the download to the button
-            if (options && options.type === 'image/svg+xml') {
-                href = 'data:' + options.type + ',' + svg;
-                extension = 'svg';
-                download();
-
-            } else {
-
-                // It's included in the page or preloaded, go ahead
-                if (window.canvg) {
-                    prepareCanvas();
-                    download();
-
-                // We need to load canvg before continuing
-                } else {
-                    this.showLoading();
-                    getScript(Highcharts.getOptions().global.canvasToolsURL, function () {
-                        chart.hideLoading();
-                        prepareCanvas();
-                        download();
-                    });
                 }
             }
-        };
-
-
-        // Extend the default options to use the local exporter logic
-        Highcharts.getOptions().exporting.buttons.contextButton.menuItems = [{
-            textKey: 'printChart',
-            onclick: function () {
-                this.print();
-            }
-        }, {
-            separator: true
-        }, {
-            textKey: 'downloadPNG',
-            onclick: function () {
-                this.exportChartLocal();
-            }
-        }, {
-            textKey: 'downloadSVG',
-            onclick: function () {
-                this.exportChartLocal({
-                    type: 'image/svg+xml'
-                });
-            }
-        }];
-    }(Highcharts));
-
-
-
-    $('#container').highcharts({
-
-        title: {
-            text: 'Offline export'
         },
+        sourceWidth: 400,
+        sourceHeight: 300,
+        scale: 1,
+        fallbackToExportServer: false,
+        error: fallbackHandler
+    },
 
-        subtitle: {
-            text: 'Click the button to download as PNG'
-        },
+    title: {
+        text: 'Offline export'
+    },
 
-        chart: {
-            type: 'area'
-        },
+    subtitle: {
+        text: 'Click the button to download as PNG, JPEG, SVG or PDF'
+    },
 
-        xAxis: {
-            categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        },
+    chart: {
+        type: 'area'
+    },
 
-        series: [{
-            data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4]
-        }]
+    xAxis: {
+        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    },
 
-    });
+    series: [{
+        data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 126.0, 148.5, 216.4, 194.1, 95.6, 54.4]
+    }]
 
 });
+

@@ -1,20 +1,18 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        rangeSelector: {
-            selected: 1
-        },
+var chart = Highcharts.stockChart('container', {
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        selected: 1
+    },
 
-    $('#button').click(function () {
-        var chart = $('#container').highcharts();
-        chart.series[0].remove();
-        this.disabled = true;
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur
+    }]
+});
 
-    });
+$('#button').click(function () {
+    chart.series[0].remove();
+    this.disabled = true;
+
 });

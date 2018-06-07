@@ -1,19 +1,22 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        rangeSelector: {
-            selected: 1
-        },
+Highcharts.stockChart('container', {
 
-        plotOptions: {
-            line: {
-                gapSize: 2
-            }
-        },
+    chart: {
+        type: 'area'
+    },
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        selected: 1
+    },
+
+    plotOptions: {
+        series: {
+            gapSize: 1
+        }
+    },
+
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur
+    }]
 });

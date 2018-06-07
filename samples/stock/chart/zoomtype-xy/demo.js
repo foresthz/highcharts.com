@@ -1,17 +1,16 @@
-$(function () {
-    $('#container').highcharts('StockChart', {
 
-        chart: {
-            zoomType: 'xy'
-        },
+Highcharts.stockChart('container', {
 
-        rangeSelector: {
-            selected: 1
-        },
+    chart: {
+        zoomType: 'xy'
+    },
 
-        series: [{
-            name: 'USD to EUR',
-            data: usdeur
-        }]
-    });
+    rangeSelector: {
+        selected: 1
+    },
+
+    series: [{
+        name: 'USD to EUR',
+        data: usdeur
+    }]
 });

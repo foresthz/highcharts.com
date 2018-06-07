@@ -1,33 +1,95 @@
-#Highcharts JS
-Highcharts JS is a JavaScript charting library based on SVG and VML rendering.
+Highcharts JS is a JavaScript charting library based on SVG, with fallbacks to VML and canvas for old browsers.
 
-* Official website:  [www.highcharts.com](http://www.highcharts.com)
-* Official download: [www.highcharts.com/download](http://www.highcharts.com/download)
+* Official website: [www.highcharts.com](http://www.highcharts.com)
+* Download page: [www.highcharts.com/download](http://www.highcharts.com/download)
 * Licensing: [www.highcharts.com/license](http://www.highcharts.com/license)
 * Support: [www.highcharts.com/support](http://www.highcharts.com/support)
+* Issues: [Repo guidelines](repo-guidelines.md)
 
-## Reporting issues
-We use GitHub Issues as our official bug tracker. We strive to keep this a clean, maintainable and searchable record of our open and closed bugs, therefore we kindly ask you to obey some rules before reporting an issue:
+## Download and install Highcharts
+This is the *working repo* for Highcharts. If you simply want to include Highcharts into a project, use the [distribution package](https://www.npmjs.com/package/highcharts) instead, or read the [download page](http://www.highcharts.com/download). Please note that there are several ways to use Highcharts. For general installation instructions, see [the docs](http://www.highcharts.com/docs/getting-started/installation).
+### Use our CDN
+Instead of downloading, you can use our CDN to access files directly. See [code.highcharts.com](https://code.highcharts.com) for details.
+```
+<script src="https://code.highcharts.com/highcharts.js"></script>
+```
+### Install from npm
+See [npm documentation](https://docs.npmjs.com/) on how to get started with npm.
+```
+npm install --save highcharts
+```
 
-1. Make sure the report is accompanied by a reproducible demo. The ideal demo is created by forking [our standard jsFiddle](http://jsfiddle.net/highcharts/llexl/), adding your own code and stripping it down to an absolute minimum needed to demonstrate the bug.
-* Always add information on what browser it applies to, and other information needed for us to debug.
-* It may be that the bug is already fixed. Try your chart with our latest work from http://github.highcharts.com/master/highcharts.js before reporting.
-* For feature requests, tech support and general discussion, don't use GitHub Issues. See [www.highcharts.com/support](www.highcharts.com/support) for the appropriate channels.
+### Install from Bower
+See [Bower documentation](https://bower.io/) on how to get started with Bower.
+```
+bower install highcharts
+```
 
-## Apply a fix
-When an issue is resolved, we commit a fix and mark the issue closed. This doesn't mean that a new release is available with the fix applied, but that it is fixed in the development code and will be added to the next stable release. Stable versions are typically released every 1-3 months. To try out the fix immediately, you can run http://github.highcharts.com/highcharts.js or http://github.highcharts.com/highstock.js from any website, but do not use these URLs in production.
+## Load Highcharts as a CommonJS module
+Highcharts is using an UMD module pattern, as a result it has support for CommonJS.
+*The following examples presumes you are using npm to install Highcharts, see [Download and install Highcharts](#download-and-install-highcharts) for more details.*
+```js
+// Load Highcharts
+var Highcharts = require('highcharts');
+// Alternatively, this is how to load Highstock. Highmaps is similar.
+// var Highcharts = require('highcharts/highstock');
 
-If the fix is critical for your project, we recommend that you apply the fix to the latest stable release of Highcharts or Highstock instead of running the latest file found on GitHub, where other untested changes are also present. Most issues are resolved in single patches that don't conflict with other changes. If you're not into Git and don't want to install and learn that procedure, here's how to apply it quickly with help of online tools:
-* Locate your issue on GitHub, for example [#2510](https://github.com/highslide-software/highcharts.com/issues/2510).
-* Most issues are closed directly from a commit. Go to that commit, for example [d5e176](https://github.com/highslide-software/highcharts.com/commit/d5e176b5c01bb60402c1f6347993a818e2ab4035).
-* Now add `.patch` to the URL to view the [patch file](https://github.com/highslide-software/highcharts.com/commit/d5e176b5c01bb60402c1f6347993a818e2ab4035.patch).
-* The patch file will show diffs from all files changed. Here it's important to be aware that `highcharts.src.js`, `highstock.src.js` and `highcharts-more.src.js` are concatenated from parts files. Instead of applying the patches from part files, you only need those from the concatenated files.
-* If you need to patch `highcharts.src.js`, copy the diff for that file. Start selecting including the line `diff --git a/js/highcharts.src.js b/js/highcharts.src.js` and select all text until the next diff statement for the next file.
-* Now the patch is on your clipboard, open another tab at [i-tools.org/diff](http://i-tools.org/diff).
-* Under "Original file", click "By URL" and enter `http://code.highcharts.com/highcharts.src.js` or another source file from the latest stable release, see [code.highcharts.com](http://code.highcharts.com).
-* Under "Second file or patch file" click "Direct input" and paste the diff from your clipboard.
-* Click the "Patch" button, and if everything is okay you should now have a patched file.
-* The next (optional) step is to compile the source code in order to reduce file size. Copy the result from the patched file.
-* Go to the [Closure Compiler web app](http://closure-compiler.appspot.com/home).
-* Paste the patched file contents to the left and click "Compile".
+// Load the exporting module, and initialize it.
+require('highcharts/modules/exporting')(Highcharts);
 
+// Generate the chart
+Highcharts.chart('container', {
+  // options - see https://api.highcharts.com/highcharts
+});
+```
+
+## Load Highcharts as an ES6 module
+Since Highcharts supports CommonJS, it can be loaded as an ES6 module with the use of transpilers. Two common transpilers are [Babel](https://babeljs.io/) and [TypeScript](https://www.typescriptlang.org/). These have different interpretations of a CommonJS module, which affects your syntax.
+*The following examples presumes you are using npm to install Highcharts, see [Download and install Highcharts](#download-and-install-highcharts) for more details.*
+### Babel
+```js
+import Highcharts from 'highcharts';
+// Alternatively, this is how to load Highstock. Highmaps is similar.
+// import Highcharts from 'highcharts/highstock';
+
+// Load the exporting module.
+import Exporting from 'highcharts/modules/exporting';
+// Initialize exporting module.
+Exporting(Highcharts);
+
+// Generate the chart
+Highcharts.chart('container', {
+  // options - see https://api.highcharts.com/highcharts
+});
+```
+### TypeScript
+```js
+import * as Highcharts from 'highcharts';
+// Alternatively, this is how to load Highstock. Highmaps is similar.
+// import Highcharts from 'highcharts/highstock';
+
+// Load the exporting module.
+import * as Exporting from 'highcharts/modules/exporting';
+// Initialize exporting module.
+Exporting(Highcharts);
+
+// Generate the chart
+Highcharts.chart('container', {
+  // options - see https://api.highcharts.com/highcharts
+});
+```
+
+## Build and debug
+If you want to do modifications to Highcharts or fix issues, you may build your own files. Highcharts uses Gulp as the build system. After `npm install` in the root folder, run `gulp`, which will set up a watch task for the JavaScript and SCSS files. Now any changes in the files of the `/js` or `/css` folders will result in new files being built and saved in the `code` folder. Other tasks are also available, like `gulp lint`.
+
+```
+npm install
+gulp
+```
+
+## Generate API docs
+Clone the repositories `api-docs` and `highcharts-docstrap` in the same parent
+folder as this `highcharts` repository. Do not forgett to install depending
+modules in this repositories by `npm i`. Finally you can run in this
+`highcharts` repository the doc generator with `gulp jsdoc --watch`, which also
+starts a new server with the generated API documentation.

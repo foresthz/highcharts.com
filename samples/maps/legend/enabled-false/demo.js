@@ -1,42 +1,41 @@
-$(function () {
 
-    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=world-population-density.json&callback=?', function (data) {
 
-        // Initiate the chart
-        $('#container').highcharts('Map', {
+$.getJSON('https://cdn.rawgit.com/highcharts/highcharts/v6.0.4/samples/data/world-population-density.json', function (data) {
 
-            chart: {
-                marginLeft: 70
-            },
+    // Initiate the chart
+    Highcharts.mapChart('container', {
 
-            title : {
-                text : 'Legend disabled'
-            },
+        chart: {
+            marginLeft: 70
+        },
 
-            legend: {
-                enabled: false
-            },
+        title: {
+            text: 'Legend disabled'
+        },
 
-            colorAxis: {
-                min: 1,
-                max: 1000,
-                type: 'logarithmic'
-            },
+        legend: {
+            enabled: false
+        },
 
-            series : [{
-                data : data,
-                mapData: Highcharts.maps['custom/world'],
-                joinBy: ['iso-a2', 'code'],
-                name: 'Population density',
-                states: {
-                    hover: {
-                        color: '#BADA55'
-                    }
-                },
-                tooltip: {
-                    valueSuffix: '/km²'
+        colorAxis: {
+            min: 1,
+            max: 1000,
+            type: 'logarithmic'
+        },
+
+        series: [{
+            data: data,
+            mapData: Highcharts.maps['custom/world'],
+            joinBy: ['iso-a2', 'code'],
+            name: 'Population density',
+            states: {
+                hover: {
+                    color: '#a4edba'
                 }
-            }]
-        });
+            },
+            tooltip: {
+                valueSuffix: '/km²'
+            }
+        }]
     });
 });

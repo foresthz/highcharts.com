@@ -1,47 +1,44 @@
-$(function () {
 
-    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=world-population-density.json&callback=?', function (data) {
+var chart;
+$.getJSON('https://cdn.rawgit.com/highcharts/highcharts/v6.0.4/samples/data/world-population-density.json', function (data) {
 
-        // Initiate the chart
-        $('#container').highcharts('Map', {
+    // Initiate the chart
+    chart = Highcharts.mapChart('container', {
 
-            chart: {
-                width: 600,
-                height: 500
-            },
+        chart: {
+            width: 600,
+            height: 500
+        },
 
-            title : {
-                text : 'Set axis extremes'
-            },
+        title: {
+            text: 'Set axis extremes'
+        },
 
-            colorAxis: {
-                min: 1,
-                max: 1000,
-                type: 'logarithmic'
-            },
+        colorAxis: {
+            min: 1,
+            max: 1000,
+            type: 'logarithmic'
+        },
 
-            series : [{
-                data : data,
-                mapData: Highcharts.maps['custom/world'],
-                joinBy: ['iso-a2', 'code'],
-                name: 'Population density',
-                states: {
-                    hover: {
-                        color: '#BADA55'
-                    }
-                },
-                tooltip: {
-                    valueSuffix: '/km²'
+        series: [{
+            data: data,
+            mapData: Highcharts.maps['custom/world'],
+            joinBy: ['iso-a2', 'code'],
+            name: 'Population density',
+            states: {
+                hover: {
+                    color: '#a4edba'
                 }
-            }]
-        });
+            },
+            tooltip: {
+                valueSuffix: '/km²'
+            }
+        }]
     });
+});
 
-    $('#setextremes').click(function () {
-        var chart = $('#container').highcharts();
-
-        chart.xAxis[0].setExtremes(740, 1180, false);
-        chart.yAxis[0].setExtremes(-1730, -1470, false);
-        chart.redraw();
-    });
+$('#setextremes').click(function () {
+    chart.xAxis[0].setExtremes(4800, 4800, false);
+    chart.yAxis[0].setExtremes(-9300, -7500, false);
+    chart.redraw();
 });

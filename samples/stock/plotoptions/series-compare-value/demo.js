@@ -1,56 +1,58 @@
-$(function () {
-    var seriesOptions = [],
-        seriesCounter = 0,
-        names = ['MSFT', 'AAPL', 'GOOG'],
-        // create the chart when all data is loaded
-        createChart = function () {
 
-            $('#container').highcharts('StockChart', {
+var seriesOptions = [],
+    seriesCounter = 0,
+    names = ['MSFT', 'AAPL', 'GOOG'];
 
-                rangeSelector: {
-                    selected: 4
-                },
+/**
+ * Create the chart when all data is loaded
+ */
+function createChart() {
 
-                yAxis: {
-                    labels: {
-                        formatter: function () {
-                            return (this.value > 0 ? ' + ' : '') + this.value;
-                        }
-                    }
-                },
+    Highcharts.stockChart('container', {
 
-                plotOptions: {
-                    series: {
-                        compare: 'value'
-                    }
-                },
+        rangeSelector: {
+            selected: 4
+        },
 
-                tooltip: {
-                    pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y} USD</b> ({point.change} USD)<br/>',
-                    changeDecimals: 2,
-                    valueDecimals: 2
-                },
+        yAxis: {
+            labels: {
+                formatter: function () {
+                    return (this.value > 0 ? ' + ' : '') + this.value;
+                }
+            }
+        },
 
-                series: seriesOptions
-            });
+        plotOptions: {
+            series: {
+                compare: 'value'
+            }
+        },
+
+        tooltip: {
+            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y} USD</b> ({point.change} USD)<br/>',
+            changeDecimals: 2,
+            valueDecimals: 2
+        },
+
+        series: seriesOptions
+    });
+}
+
+$.each(names, function (i, name) {
+
+    $.getJSON('https://www.highcharts.com/samples/data/' + name.toLowerCase() + '-c.json',    function (data) {
+
+        seriesOptions[i] = {
+            name: name,
+            data: data
         };
 
-    $.each(names, function (i, name) {
+        // As we're loading the data asynchronously, we don't know what order it will arrive. So
+        // we keep a counter and create the chart when all the data is loaded.
+        seriesCounter += 1;
 
-        $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=' + name.toLowerCase() + '-c.json&callback=?',    function (data) {
-
-            seriesOptions[i] = {
-                name: name,
-                data: data
-            };
-
-            // As we're loading the data asynchronously, we don't know what order it will arrive. So
-            // we keep a counter and create the chart when all the data is loaded.
-            seriesCounter += 1;
-
-            if (seriesCounter === names.length) {
-                createChart();
-            }
-        });
+        if (seriesCounter === names.length) {
+            createChart();
+        }
     });
 });

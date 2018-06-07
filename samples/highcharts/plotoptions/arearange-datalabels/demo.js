@@ -1,10 +1,12 @@
-$(function () {
-    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=range.json&callback=?', function (data) {
+
+$.getJSON(
+    'https://cdn.rawgit.com/highcharts/highcharts/v6.0.5/samples/data/range.json',
+    function (data) {
 
         // Shorten the data
         data = data.splice(181, 14);
 
-        $('#container').highcharts({
+        Highcharts.chart('container', {
 
             chart: {
                 type: 'arearange'
@@ -40,15 +42,10 @@ $(function () {
                 dataLabels: {
                     enabled: true,
                     yHigh: 20,
-                    yLow: -20,
-                    style: {
-                        color: 'white',
-                        textShadow: '0px 1px 2px black '
-                    }
+                    yLow: -20
                 }
             }]
 
         });
-    });
-
-});
+    }
+);
